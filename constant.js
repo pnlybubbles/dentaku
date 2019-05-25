@@ -20,21 +20,21 @@ export const MODE = {
 
 export const PAD = [
   {
-    label: '＜',
+    label: '',
     type: ACTION.OP,
     payload: {
       op: OP.NONE
     }
   },
   {
-    label: '％',
+    label: '',
     type: ACTION.OP,
     payload: {
       op: OP.NONE
     }
   },
   {
-    label: 'M',
+    label: '',
     type: ACTION.OP,
     payload: {
       op: OP.NONE

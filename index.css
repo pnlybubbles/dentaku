@@ -44,7 +44,8 @@ body {
   background-color: #fff;
   color: #444;
   height: 25vw;
-  font-size: 18px;
+  font-size: 20px;
+  font-family: 'Avenir Next';
 }
 
 .button:nth-child(4n) {
@@ -64,4 +65,9 @@ body {
   background-color: #64f764;
   color: #444;
   font-size: 24px;
+}
+
+.label {
+  display: inline-block;
+  margin-top: 3px;
 }

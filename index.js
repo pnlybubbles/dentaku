@@ -15,13 +15,13 @@ const render = (emit, state) => {
                 class="${classNames([
                   'button',
                   {
-                    op: v.type === ACTION.OP,
+                    op: v.type === ACTION.OP || v.type === ACTION.CLEAR,
                     ans: v.type === ACTION.ANS
                   }
                 ])}"
                 onclick=${() => emit(v.type, v.payload)}
               >
-                ${v.label}
+                <span class="label">${v.label}</span>
               </button>
             `
         )}
