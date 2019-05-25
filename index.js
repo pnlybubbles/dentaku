@@ -20,6 +20,7 @@ const render = (emit, state) => {
                   }
                 ])}"
                 onclick=${() => emit(v.type, v.payload)}
+                ontouchstart=""
               >
                 <span class="label">${v.label}</span>
               </button>
