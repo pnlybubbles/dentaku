@@ -1,0 +1,67 @@
+body {
+  margin: 0;
+  font-family: 'AvenirNext-UltraLight';
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #000;
+}
+
+.display-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.display {
+  color: #eee;
+  font-size: 72px;
+  text-align: right;
+  font-weight: 100;
+  padding-top: 24px;
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.button {
+  display: block;
+  width: 25vw;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  background-color: #fff;
+  color: #444;
+  height: 25vw;
+  font-size: 18px;
+}
+
+.button:nth-child(4n) {
+  border-right: 0;
+}
+
+.button:nth-child(n + 17) {
+  border-bottom: 0;
+}
+
+.button.op {
+  color: #ccc;
+  font-size: 24px;
+}
+
+.button.ans {
+  background-color: #64f764;
+  color: #444;
+  font-size: 24px;
+}
