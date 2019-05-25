@@ -49,6 +49,7 @@ body {
   font-size: 20px;
   font-family: 'Avenir Next';
   -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 .button:active {
@@ -75,7 +76,7 @@ body {
 }
 
 .button.ans:active {
-  background-color: #63ec63;
+  background-color: #65de65;
 }
 
 .label {
