@@ -51,6 +51,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.button:active {
+  background-color: #f3f3f3;
+}
+
 .button:nth-child(4n) {
   border-right: 0;
 }
@@ -70,8 +74,8 @@ body {
   font-size: 24px;
 }
 
-.button:active {
-  background-color: #f3f3f3;
+.button.ans:active {
+  background-color: #63ec63;
 }
 
 .label {
