@@ -1,6 +1,8 @@
 body {
   margin: 0;
   font-family: 'AvenirNext-UltraLight';
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
 }
 
 .root {
@@ -46,6 +48,7 @@ body {
   height: 25vw;
   font-size: 20px;
   font-family: 'Avenir Next';
+  -webkit-tap-highlight-color: transparent;
 }
 
 .button:nth-child(4n) {
@@ -65,6 +68,10 @@ body {
   background-color: #64f764;
   color: #444;
   font-size: 24px;
+}
+
+.button:active {
+  background-color: #fafafa;
 }
 
 .label {
