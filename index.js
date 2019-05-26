@@ -37,7 +37,9 @@ const render = (emit, state) => {
                 onclick=${() => emit(v.type, v.payload)}
                 ontouchstart=""
               >
-                <span class="label">${v.label}</span>
+                <span class="label"
+                  >${v.type === ACTION.CLEAR && state.ac ? 'AC' : v.label}</span
+                >
               </button>
             `
         )}
@@ -50,7 +52,8 @@ const initialState = {
   value: 0,
   display: '0',
   mode: MODE.CLEAR,
-  op: OP.NONE
+  op: OP.NONE,
+  ac: true
 }
 
 const mutation = (state, action, payload) => {
@@ -61,7 +64,12 @@ const mutation = (state, action, payload) => {
         case MODE.DEFAULT:
           return { ...state, display: state.display + payload.value }
         case MODE.CLEAR:
-          return { ...state, display: payload.value, mode: MODE.DEFAULT }
+          return {
+            ...state,
+            display: payload.value,
+            mode: MODE.DEFAULT,
+            ac: false
+          }
         default:
           return state
       }
@@ -86,7 +94,11 @@ const mutation = (state, action, payload) => {
     }
     case ACTION.CLEAR: {
       // "C"が押されたとき
-      return { ...state, mode: MODE.CLEAR, display: '0' }
+      if (state.ac) {
+        return { ...state, mode: MODE.CLEAR, display: '0', value: 0 }
+      } else {
+        return { ...state, mode: MODE.CLEAR, display: '0', ac: true }
+      }
     }
     case ACTION.ANS: {
       // "="が押されたとき
@@ -97,7 +109,8 @@ const mutation = (state, action, payload) => {
         op: OP.NONE,
         mode: MODE.CLEAR,
         value,
-        display: value.toString()
+        display: value.toString(),
+        ac: true
       }
     }
     case ACTION.DOT: {
@@ -106,7 +119,7 @@ const mutation = (state, action, payload) => {
       if (display.includes('.')) {
         return state
       } else if (mode === MODE.CLEAR) {
-        return { ...state, mode: MODE.DEFAULT, display: '0.' }
+        return { ...state, mode: MODE.DEFAULT, display: '0.', ac: false }
       } else {
         return { ...state, display: display + '.' }
       }
