@@ -1,5 +1,20 @@
-import { html, app, logger, classNames } from './lib.js'
+import { html, app, logger, classNames, styleObjectToString } from './lib.js'
 import { ACTION, MODE, OP, PAD } from './constant.js'
+
+const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
+
+if (isIOS) {
+  window.addEventListener(
+    'touchmove',
+    function(e) {
+      e.preventDefault()
+    },
+    { passive: false }
+  )
+  document.body.style = styleObjectToString({
+    minHeight: `${window.innerHeight}px`
+  })
+}
 
 const render = (emit, state) => {
   return html`

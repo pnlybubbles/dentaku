@@ -130,7 +130,7 @@ const getTimeString = () => {
   return `${hour}:${minute}:${second}.${millisecond}`
 }
 
-const styleObjectToString = style =>
+export const styleObjectToString = style =>
   Object.keys(style)
     .map(key => `${key}: ${style[key]};`)
     .join('\n')

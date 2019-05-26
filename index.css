@@ -4,12 +4,13 @@ body {
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
   background-color: #000;
+  overflow: hidden;
 }
 
 .root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
 }
 
 .display-container {
@@ -34,6 +35,10 @@ body {
   flex-wrap: wrap;
   border-radius: 8px;
   overflow: hidden;
+  max-height: calc(100% - 120px);
+  height: 120vw;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .button {
@@ -46,7 +51,7 @@ body {
   border-right: 1px solid #ddd;
   background-color: #fff;
   color: #444;
-  height: 25vw;
+  height: 20%;
   font-size: 20px;
   font-family: 'Avenir Next';
   -webkit-tap-highlight-color: transparent;
@@ -55,7 +60,7 @@ body {
 }
 
 .button:active {
-  background-color: #f3f3f3;
+  background-color: #e6dce0;
   transform: scale(0.9);
   transition: all 0s;
 }
@@ -69,8 +74,12 @@ body {
 }
 
 .button.op {
-  color: #ccc;
+  color: #e6cfd9;
   font-size: 24px;
+}
+
+.button.op:active {
+  color: #d2b2c0;
 }
 
 .button.ans {
