@@ -3,13 +3,13 @@ body {
   font-family: 'AvenirNext-UltraLight';
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
+  background-color: #000;
 }
 
 .root {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #000;
 }
 
 .display-container {
