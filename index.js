@@ -40,7 +40,8 @@ const initialState = {
 
 const mutation = (state, action, payload) => {
   switch (action) {
-    case ACTION.NUM:
+    // 数字が押されたとき
+    case ACTION.NUM: {
       switch (state.mode) {
         case MODE.DEFAULT:
           return { ...state, display: state.display + payload.value }
@@ -49,36 +50,68 @@ const mutation = (state, action, payload) => {
         default:
           return state
       }
-    case ACTION.OP:
-      const { value, display } = state
-      const current = parseFloat(display)
-      const newValue =
-        state.mode === MODE.CLEAR
-          ? value
-          : calculation(state.op, value, current)
-      return {
-        ...state,
-        op: payload.op,
-        mode: MODE.CLEAR,
-        value: newValue,
-        display: newValue.toString()
+    }
+    case ACTION.OP: {
+      // 二項演算子が押されたとき
+      const { op } = payload
+      switch (state.mode) {
+        case MODE.DEFAULT:
+          const current = parseFloat(state.display)
+          const value = calc(state.op, state.value, current)
+          return {
+            ...state,
+            op,
+            mode: MODE.CLEAR,
+            value,
+            display: value.toString()
+          }
+        case MODE.CLEAR:
+          return { ...state, op }
       }
-    case ACTION.CLEAR:
+    }
+    case ACTION.CLEAR: {
+      // "C"が押されたとき
       return { ...state, op: OP.NONE, mode: MODE.CLEAR, display: '0' }
-    case ACTION.ANS:
-      return (newValue => ({
+    }
+    case ACTION.ANS: {
+      // "="が押されたとき
+      const current = parseFloat(state.display)
+      const value = calc(state.op, state.value, current)
+      return {
         ...state,
         op: OP.NONE,
         mode: MODE.CLEAR,
-        value: newValue,
-        display: newValue.toString()
-      }))(calculation(state.op, state.value, parseFloat(state.display)))
-    default:
+        value,
+        display: value.toString()
+      }
+    }
+    case ACTION.DOT: {
+      // "."が押されたとき
+      const { display, mode } = state
+      if (display.includes('.')) {
+        return state
+      } else if (mode === MODE.CLEAR) {
+        return { ...state, mode: MODE.DEFAULT, display: '0.' }
+      } else {
+        return { ...state, display: display + '.' }
+      }
+    }
+    case ACTION.ZERO: {
+      // "0"が押されたとき
+      const { display, mode } = state
+      if (mode === MODE.CLEAR) {
+        return state
+      } else {
+        return { ...state, display: display + '0' }
+      }
+    }
+    default: {
       return state
+    }
   }
 }
 
-const calculation = (type, lhs, rhs) => {
+const calc = (type, lhs, rhs) => {
   switch (type) {
     case OP.NONE:
       return rhs

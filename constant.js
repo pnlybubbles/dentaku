@@ -2,7 +2,9 @@ export const ACTION = {
   NUM: 'NUM',
   OP: 'OP',
   ANS: 'ANS',
-  CLEAR: 'CLEAR'
+  CLEAR: 'CLEAR',
+  DOT: 'DOT',
+  ZERO: 'ZERO'
 }
 
 export const OP = {
@@ -133,26 +135,18 @@ export const PAD = [
   },
   {
     label: '0',
-    type: ACTION.NUM,
-    payload: {
-      value: '0'
-    }
+    type: ACTION.ZERO
   },
   {
     label: '.',
-    type: ACTION.NUM,
-    payload: {
-      value: '.'
-    }
+    type: ACTION.DOT
   },
   {
     label: 'C',
-    type: ACTION.CLEAR,
-    payload: {}
+    type: ACTION.CLEAR
   },
   {
     label: '=',
-    type: ACTION.ANS,
-    payload: {}
+    type: ACTION.ANS
   }
 ]
