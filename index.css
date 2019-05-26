@@ -94,6 +94,14 @@ body {
   color: #ddd;
 }
 
+.button.highlight {
+  color: #ff0073;
+}
+
+.button.button.highlight:active {
+  color: #d2176b;
+}
+
 .button.highlight::before {
   content: '';
   display: block;
