@@ -86,7 +86,7 @@ const mutation = (state, action, payload) => {
     }
     case ACTION.CLEAR: {
       // "C"が押されたとき
-      return { ...state, op: OP.NONE, mode: MODE.CLEAR, display: '0' }
+      return { ...state, mode: MODE.CLEAR, display: '0' }
     }
     case ACTION.ANS: {
       // "="が押されたとき
