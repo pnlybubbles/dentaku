@@ -4,7 +4,8 @@ export const ACTION = {
   ANS: 'ANS',
   CLEAR: 'CLEAR',
   DOT: 'DOT',
-  ZERO: 'ZERO'
+  ZERO: 'ZERO',
+  NONE: 'NONE'
 }
 
 export const OP = {
@@ -23,24 +24,15 @@ export const MODE = {
 export const PAD = [
   {
     label: '',
-    type: ACTION.OP,
-    payload: {
-      op: OP.NONE
-    }
+    type: ACTION.NONE
   },
   {
     label: '',
-    type: ACTION.OP,
-    payload: {
-      op: OP.NONE
-    }
+    type: ACTION.NONE
   },
   {
     label: '',
-    type: ACTION.OP,
-    payload: {
-      op: OP.NONE
-    }
+    type: ACTION.NONE
   },
   {
     label: '÷',

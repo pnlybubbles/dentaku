@@ -57,6 +57,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   outline: none;
   transition: all 0.2s;
+  position: relative;
 }
 
 .button:active {
@@ -91,6 +92,24 @@ body {
 .button.ans:active {
   background-color: #d2176b;
   color: #ddd;
+}
+
+.button.highlight::before {
+  content: '';
+  display: block;
+  width: 12vw;
+  height: 12vw;
+  border-radius: 50%;
+  border: 2px solid #ff0073;
+  position: absolute;
+  top: calc(50% + 1px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.button.highlight:active::before {
+  border-color: #d2176b;
 }
 
 .label {

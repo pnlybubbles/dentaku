@@ -31,7 +31,8 @@ const render = (emit, state) => {
                   'button',
                   {
                     op: v.type === ACTION.OP || v.type === ACTION.CLEAR,
-                    ans: v.type === ACTION.ANS
+                    ans: v.type === ACTION.ANS,
+                    highlight: v.type === ACTION.OP && v.payload.op === state.op
                   }
                 ])}"
                 onclick=${() => emit(v.type, v.payload)}
@@ -95,7 +96,13 @@ const mutation = (state, action, payload) => {
     case ACTION.CLEAR: {
       // "C"が押されたとき
       if (state.ac) {
-        return { ...state, mode: MODE.CLEAR, display: '0', value: 0 }
+        return {
+          ...state,
+          mode: MODE.CLEAR,
+          display: '0',
+          op: OP.NONE,
+          value: 0
+        }
       } else {
         return { ...state, mode: MODE.CLEAR, display: '0', ac: true }
       }
