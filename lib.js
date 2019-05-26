@@ -12,12 +12,59 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
     }
     purgeGlobalFunction()
     const dom = render(emit, newState)
-    $target.childNodes.forEach(v => $target.removeChild(v))
-    $target.appendChild(dom)
+    if (!($target.childNodes[0] instanceof Node)) {
+      $target.appendChild(dom)
+    } else {
+      updateDiffDom($target.childNodes[0], dom)
+    }
     state = newState
   }
 
   emit(BUILTIN_ACTION.init)
+}
+
+const NODE_TYPE = {
+  ELEMENT_NODE: 1
+}
+
+const isElementNode = node => node.nodeType === NODE_TYPE.ELEMENT_NODE
+
+const replaceNode = (targetNode, newNode) => {
+  targetNode.parentNode.replaceChild(newNode, targetNode)
+}
+
+const isShallowEqualNode = (targetNode, newNode) =>
+  targetNode.nodeType === newNode.nodeType &&
+  targetNode.nodeName === newNode.nodeName &&
+  targetNode.nodeValue === newNode.nodeValue &&
+  targetNode.childNodes.length === newNode.childNodes.length
+
+const updateDiffDom = (targetNode, newNode) => {
+  if (!isShallowEqualNode(targetNode, newNode)) {
+    replaceNode(targetNode, newNode)
+  } else {
+    if (isElementNode(targetNode) && isElementNode(newNode)) {
+      for (const targetAttribute of targetNode.attributes) {
+        const name = targetAttribute.name
+        const newValue = newNode.getAttribute(name)
+        if (newValue === null) {
+          targetNode.removeAttribute(name)
+        } else if (newValue !== targetAttribute.value) {
+          targetNode.setAttribute(name, newValue)
+        }
+      }
+      for (const newAttribute of newNode.attributes) {
+        if (targetNode.getAttribute(newAttribute.name) !== null) continue
+        targetNode.setAttribute(newAttribute.name, newAttribute.value)
+      }
+    }
+    for (const [targetNode_, newNode_] of zip(
+      targetNode.childNodes,
+      newNode.childNodes
+    )) {
+      updateDiffDom(targetNode_, newNode_)
+    }
+  }
 }
 
 export const html = (template, ...args) => {
@@ -116,6 +163,13 @@ const registerGlobalFunction = func => {
 
 const purgeGlobalFunction = () => {
   window[PREFIX] = {}
+}
+
+function* zip(a, b) {
+  const minLength = Math.max(a.length, b.length)
+  for (let i = 0; i < minLength; i++) {
+    yield [a[i], b[i]]
+  }
 }
 
 function* eachAlternatly(first, second) {

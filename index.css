@@ -51,10 +51,13 @@ body {
   font-family: 'Avenir Next';
   -webkit-tap-highlight-color: transparent;
   outline: none;
+  transition: all 0.2s;
 }
 
 .button:active {
   background-color: #f3f3f3;
+  transform: scale(0.9);
+  transition: all 0s;
 }
 
 .button:nth-child(4n) {
@@ -71,13 +74,14 @@ body {
 }
 
 .button.ans {
-  background-color: #64f764;
-  color: #444;
+  background-color: #ff0073;
+  color: #fff;
   font-size: 24px;
 }
 
 .button.ans:active {
-  background-color: #65de65;
+  background-color: #d2176b;
+  color: #ddd;
 }
 
 .label {
