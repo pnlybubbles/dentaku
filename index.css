@@ -102,7 +102,7 @@ body {
   color: #d2176b;
 }
 
-.button.highlight::before {
+.button::before {
   content: '';
   display: block;
   width: 12vw;
@@ -114,10 +114,17 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
+  transition: all 0.2s;
+  opacity: 0;
 }
 
-.button.highlight:active::before {
+.button:active::before {
   border-color: #d2176b;
+  transition: all 0s;
+}
+
+.button.highlight::before {
+  opacity: 1;
 }
 
 .label {
