@@ -1,4 +1,12 @@
-import { html, app, logger, classNames, styleObjectToString } from './lib.js'
+import {
+  html,
+  app,
+  logger,
+  classNames,
+  styleObjectToString,
+  isIOS,
+  isSP
+} from './lib.js'
 import { ACTION, MODE, OP, PAD } from './constant.js'
 
 const render = (emit, state) => {
@@ -8,29 +16,31 @@ const render = (emit, state) => {
         <div class="display">${state.display}</div>
       </div>
       <div class="container">
-        ${PAD.map(
-          v =>
-            html`
-              <button
-                class="${classNames([
-                  'button',
-                  {
-                    op: v.type === ACTION.OP || v.type === ACTION.CLEAR,
-                    ans: v.type === ACTION.ANS,
-                    highlight: v.type === ACTION.OP && v.payload.op === state.op
-                  }
-                ])}"
-                onclick=${() => emit(v.type, v.payload)}
-                ontouchstart=""
-              >
-                <span class="label"
-                  >${v.type === ACTION.CLEAR && state.ac ? 'AC' : v.label}</span
-                >
-              </button>
-            `
-        )}
+        ${PAD.map(pad => renderButton(emit, pad, state.op, state.ac))}
       </div>
     </main>
+  `
+}
+
+const onClick = isSP ? 'ontouchend' : 'onclick'
+
+const renderButton = (emit, pad, op, ac) => {
+  return html`
+    <button
+      class="${classNames([
+        'button',
+        {
+          op: pad.type === ACTION.OP || pad.type === ACTION.CLEAR,
+          ans: pad.type === ACTION.ANS,
+          highlight: pad.type === ACTION.OP && pad.payload.op === op
+        }
+      ])}"
+      ${onClick}=${() => emit(pad.type, pad.payload)}
+    >
+      <span class="label"
+        >${pad.type === ACTION.CLEAR && ac ? 'AC' : pad.label}</span
+      >
+    </button>
   `
 }
 
@@ -151,8 +161,6 @@ const calc = (type, lhs, rhs) => {
 app(document.querySelector('#app'), initialState, [logger], mutation, render)
 
 // iOS対応
-const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
-
 if (isIOS) {
   window.addEventListener(
     'touchmove',

@@ -183,3 +183,6 @@ function* eachAlternatly(first, second) {
     if (i >= first.length && j >= second.length) break
   }
 }
+
+export const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
+export const isSP = /(iP(hone|(o|a)d))|Android/.test(navigator.userAgent)
