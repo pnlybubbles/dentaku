@@ -1,21 +1,6 @@
 import { html, app, logger, classNames, styleObjectToString } from './lib.js'
 import { ACTION, MODE, OP, PAD } from './constant.js'
 
-const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
-
-if (isIOS) {
-  window.addEventListener(
-    'touchmove',
-    function(e) {
-      e.preventDefault()
-    },
-    { passive: false }
-  )
-  document.body.style = styleObjectToString({
-    minHeight: `${window.innerHeight}px`
-  })
-}
-
 const render = (emit, state) => {
   return html`
     <main class="root">
@@ -164,3 +149,34 @@ const calc = (type, lhs, rhs) => {
 }
 
 app(document.querySelector('#app'), initialState, [logger], mutation, render)
+
+// iOS対応
+const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
+
+if (isIOS) {
+  window.addEventListener(
+    'touchmove',
+    function(e) {
+      e.preventDefault()
+    },
+    { passive: false }
+  )
+  document.body.style = styleObjectToString({
+    minHeight: `${window.innerHeight}px`
+  })
+}
+
+// PWA対応
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('service-worker.js')
+    .then(function(registration) {
+      console.log(
+        'Service Worker registration successful with scope: ',
+        registration.scope
+      )
+    })
+    .catch(function(err) {
+      console.log('Service Worker registration failed: ', err)
+    })
+}
