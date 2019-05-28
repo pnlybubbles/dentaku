@@ -10,7 +10,6 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
     for (const mw of middlewares) {
       mw(newState, action, payload)
     }
-    purgeGlobalFunction()
     const dom = render(emit, newState)
     if (!($target.childNodes[0] instanceof Node)) {
       $target.appendChild(dom)
@@ -24,10 +23,12 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
 }
 
 const NODE_TYPE = {
-  ELEMENT_NODE: 1
+  ELEMENT_NODE: 1,
+  COMMENT_NODE: 8
 }
 
 const isElementNode = node => node.nodeType === NODE_TYPE.ELEMENT_NODE
+const isCommentNode = node => node.nodeType === NODE_TYPE.COMMENT_NODE
 
 const replaceNode = (targetNode, newNode) => {
   targetNode.parentNode.replaceChild(newNode, targetNode)
@@ -68,24 +69,65 @@ const updateDiffDom = (targetNode, newNode) => {
 }
 
 export const html = (template, ...args) => {
-  const text = [...eachAlternatly(template, parseArgs(args))].join('')
-  return new DOMParser()
+  const { argsStr, funcMap, nodeMap } = parseArgs(args)
+  const text = [...eachAlternatly(template, argsStr)].join('')
+  const dom = new DOMParser()
     .parseFromString(text, 'text/html')
     .querySelector('body').childNodes[0]
+  traverseNode(dom, node => {
+    if (isElementNode(node)) {
+      // イベントリスナの設定
+      for (const attr of node.attributes) {
+        const f = funcMap[attr.value]
+        if (f !== undefined) {
+          const name = attr.name
+          node.removeAttribute(name)
+          node.addEventListener(name.slice(2), f)
+        }
+      }
+    } else if (isCommentNode(node)) {
+      // 子ノードの挿入
+      const n = nodeMap[node.nodeValue]
+      if (n !== undefined) {
+        replaceNode(node, n)
+      }
+    }
+  })
+  return dom
 }
 
-const parseArgs = args =>
-  args.map(arg => {
+const traverseNode = (entryNode, f) => {
+  f(entryNode)
+  for (const node of entryNode.childNodes) {
+    traverseNode(node, f)
+  }
+}
+
+const parseArgs = args => {
+  const funcMap = {}
+  const nodeMap = {}
+  const argsStr = args.map(arg => {
     switch (typeof arg) {
       case 'string':
         return arg
       case 'function':
-        return registerGlobalFunction(arg)
+        const hash = randomString()
+        funcMap[hash] = arg
+        return hash
       case 'object':
         if (Array.isArray(arg)) {
-          return parseArgs(arg).join('')
+          const {
+            funcMap: funcMap_,
+            nodeMap: nodeMap_,
+            argsStr: argsStr_
+          } = parseArgs(arg)
+          Object.assign(funcMap, funcMap_)
+          Object.assign(nodeMap, nodeMap_)
+          return argsStr_.join('')
         } else if (arg instanceof Node) {
-          return arg.outerHTML
+          const hash = randomString()
+          nodeMap[hash] = arg
+          return `<!--${hash}-->`
         } else {
           return arg.toString()
         }
@@ -93,6 +135,8 @@ const parseArgs = args =>
         return arg.toString()
     }
   })
+  return { argsStr, funcMap, nodeMap }
+}
 
 export const logger = (state, action, _payload) => {
   console.log(
@@ -151,19 +195,6 @@ export const classNames = arrayClassNames =>
       }
     })
     .join(' ')
-
-const PREFIX = '__functions__'
-
-const registerGlobalFunction = func => {
-  const id = randomString()
-  window[PREFIX] = window[PREFIX] || {}
-  window[PREFIX][id] = func
-  return `window['${PREFIX}']['${id}']()`
-}
-
-const purgeGlobalFunction = () => {
-  window[PREFIX] = {}
-}
 
 function* zip(a, b) {
   const minLength = Math.max(a.length, b.length)
