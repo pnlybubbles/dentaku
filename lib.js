@@ -11,7 +11,11 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
       mw(newState, action, payload)
     }
     purgeGlobalFunction()
-    const dom = render(emit, newState)
+    // 構造データを取得
+    const root = render(emit, newState)
+    // DOM構築(キャッシュ適用)
+    const dom = compile(root)
+    // 差分更新
     if (!($target.childNodes[0] instanceof Node)) {
       $target.appendChild(dom)
     } else {
@@ -67,32 +71,154 @@ const updateDiffDom = (targetNode, newNode) => {
   }
 }
 
-export const html = (template, ...args) => {
-  const text = [...eachAlternatly(template, parseArgs(args))].join('')
-  return new DOMParser()
-    .parseFromString(text, 'text/html')
-    .querySelector('body').childNodes[0]
+const $cache = []
+
+const saveCache = (vnode, dom) => {
+  $cache.push({
+    vnode,
+    dom
+  })
 }
 
-const parseArgs = args =>
-  args.map(arg => {
-    switch (typeof arg) {
-      case 'string':
-        return arg
-      case 'function':
-        return registerGlobalFunction(arg)
-      case 'object':
-        if (Array.isArray(arg)) {
-          return parseArgs(arg).join('')
-        } else if (arg instanceof Node) {
-          return arg.outerHTML
-        } else {
-          return arg.toString()
+const fetchCache = template => {
+  for (const c of $cache) {
+    if (c.vnode.template.every((v, i) => template[i] === v)) {
+      return c
+    }
+  }
+  return null
+}
+
+const getDomByVnode = (vnode, slots) => {
+  const { template, anchors } = vnode
+  const cached = fetchCache(template)
+  if (cached !== null) {
+    return {
+      dom: cached.dom.cloneNode(true),
+      slots: Object.fromEntries(
+        cached.vnode.anchors.map((a, i) => [a, slots[anchors[i]]])
+      )
+    }
+  } else {
+    const text = [...eachAlternately(template, anchors)].join('')
+    const dom = new DOMParser()
+      .parseFromString(text, 'text/html')
+      .querySelector('body').childNodes[0]
+    saveCache(vnode, dom)
+    return {
+      dom: dom.cloneNode(true),
+      slots
+    }
+  }
+}
+
+const compile = ({ vnode: vnode_, slots: slots_ }) => {
+  const { dom, slots } = getDomByVnode(vnode_, slots_)
+  traverseNode(dom, node => {
+    if (node.nodeValue !== null) {
+      const slot = slots[node.nodeValue.trim()]
+      if (slot) {
+        switch (slot.type) {
+          case SLOT_TYPE.NODE:
+            replaceNode(node, compile(slot.value))
+            break
+          case SLOT_TYPE.VALUE:
+            node.nodeValue = slot.value
+            break
         }
-      default:
-        return arg.toString()
+      }
+    }
+    if (isElementNode(node)) {
+      for (const attr of node.attributes) {
+        const attrNameSlot = slots[attr.name]
+        if (attrNameSlot) {
+          node.setAttribute(attrNameSlot.value, attr.value)
+          node.removeAttribute(attr.name)
+        }
+        const attrValueSlot = slots[attr.value]
+        if (attrValueSlot) {
+          node.setAttribute(attr.name, attrValueSlot.value)
+        }
+      }
     }
   })
+  return dom
+}
+
+const traverseNode = (node, f) => {
+  f(node)
+  for (const childNodes of node.childNodes) {
+    traverseNode(childNodes, f)
+  }
+}
+
+const SLOT_TYPE = {
+  NODE: 'NODE',
+  VALUE: 'VALUE'
+}
+
+export const html = (templateOrg, ...args) => {
+  // const text = [...eachAlternately(template, parseArgs(args))].join('')
+  const slots = {}
+  const anchors = []
+  const template = [...templateOrg]
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (Array.isArray(arg)) {
+      const slotArr = arg.map(a => parseArg(a))
+      const anchorArr = slotArr.map(() => getAnchor())
+      const textNodeSeparator = new Array(anchorArr.length - 1).fill('<!---->')
+      Object.assign(slots, Object.fromEntries(zip(anchorArr, slotArr)))
+      anchors.push(...anchorArr)
+      template.splice(i + 1, 0, ...textNodeSeparator)
+    } else {
+      const anchor = getAnchor()
+      Object.assign(slots, { [anchor]: parseArg(arg) })
+      anchors.push(anchor)
+    }
+  }
+  const vnode = {
+    template,
+    anchors
+  }
+  return {
+    vnode,
+    slots
+  }
+}
+
+const getAnchor = () => `_${randomString()}`
+
+const parseArg = arg => {
+  switch (typeof arg) {
+    case 'string':
+    case 'number':
+      return {
+        type: SLOT_TYPE.VALUE,
+        value: arg.toString()
+      }
+    case 'function':
+      return {
+        type: SLOT_TYPE.VALUE,
+        value: registerGlobalFunction(arg)
+      }
+    case 'object':
+      if ((arg.vnode, arg.slots)) {
+        return {
+          type: SLOT_TYPE.NODE,
+          value: arg
+        }
+      } else {
+        // Go through default ↓
+      }
+    default:
+      console.warn('Unknown type of arg: ', arg)
+      return {
+        type: SLOT_TYPE.VALUE,
+        value: arg.toString()
+      }
+  }
+}
 
 export const logger = (state, action, _payload) => {
   console.log(
@@ -172,7 +298,7 @@ function* zip(a, b) {
   }
 }
 
-function* eachAlternatly(first, second) {
+function* eachAlternately(first, second) {
   let i = 0
   let j = 0
   while (true) {
