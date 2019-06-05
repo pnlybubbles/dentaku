@@ -5,7 +5,10 @@ export const ACTION = {
   CLEAR: 'CLEAR',
   DOT: 'DOT',
   ZERO: 'ZERO',
-  NONE: 'NONE'
+  NONE: 'NONE',
+  MEMORY: 'MEMORY',
+  APPLY_MEMORY: 'APPLY_MEMORY',
+  CLEAR_MEMORY: 'CLEAR_MEMORY'
 }
 
 export const OP = {
@@ -13,6 +16,7 @@ export const OP = {
   SUB: 'SUB',
   MUL: 'MUL',
   DIV: 'DIV',
+  PERCENTAGE: 'PERCENTAGE',
   NONE: 'NONE'
 }
 
@@ -23,16 +27,19 @@ export const MODE = {
 
 export const PAD = [
   {
-    label: '',
-    type: ACTION.NONE
+    label: 'CM',
+    type: ACTION.CLEAR_MEMORY
   },
   {
-    label: '',
-    type: ACTION.NONE
+    label: 'M',
+    type: ACTION.MEMORY
   },
   {
-    label: '',
-    type: ACTION.NONE
+    label: '%',
+    type: ACTION.OP,
+    payload: {
+      op: OP.PERCENTAGE
+    }
   },
   {
     label: '÷',

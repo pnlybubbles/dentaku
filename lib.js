@@ -99,10 +99,9 @@ const updateDiffDom = (targetNode, newNode) => {
         targetNode.setAttribute(newAttribute.name, newAttribute.value)
       }
     }
-    for (const [targetNode_, newNode_] of zip(
-      targetNode.childNodes,
-      newNode.childNodes
-    )) {
+    for (const [targetNode_, newNode_] of [
+      ...zip(targetNode.childNodes, newNode.childNodes)
+    ].reverse()) {
       // ノードの差分更新
       updateDiffDom(targetNode_, newNode_)
     }
@@ -253,7 +252,7 @@ export const html = (templateOrg, ...args) => {
   const slots = {}
   const anchors = []
   const template = [...templateOrg]
-  for (let i = 0; i < args.length; i++) {
+  for (let i = args.length - 1; i >= 0; i--) {
     const arg = args[i]
     if (Array.isArray(arg)) {
       // 配列が1つのスロットに入っている場合は、配列をフラットに展開して複数のスロットにする
@@ -261,18 +260,26 @@ export const html = (templateOrg, ...args) => {
       // テキストノードを分割するために間にコメントノードを挟む
       // `ID1<!---->ID2<!---->ID3<!---->ID4`
       // のようなHTMLになるように配列を展開してフラットにする
-      const slotArr = arg.map(a => parseArg(a))
-      const anchorArr = slotArr.map(() => getAnchor())
-      const textNodeSeparator = new Array(anchorArr.length - 1).fill('<!---->')
-      Object.assign(slots, Object.fromEntries(zip(anchorArr, slotArr)))
-      anchors.push(...anchorArr)
-      template.splice(i + 1, 0, ...textNodeSeparator)
+      if (arg.length === 0) {
+        const anchor = getAnchor()
+        Object.assign(slots, { [anchor]: parseArg('') })
+        anchors.unshift(anchor)
+      } else if (arg.length >= 1) {
+        const slotArr = arg.map(a => parseArg(a))
+        const anchorArr = slotArr.map(() => getAnchor())
+        Object.assign(slots, Object.fromEntries(zip(anchorArr, slotArr)))
+        anchors.unshift(...anchorArr)
+        if (arg.length >= 2) {
+          const textNodeSeparator = new Array(arg.length - 1).fill('<!---->')
+          template.splice(i + 1, 0, ...textNodeSeparator)
+        }
+      }
     } else {
       // アンカーIDを生成
       // アンカーIDに対応したスロットをハッシュテーブルに追加
       const anchor = getAnchor()
       Object.assign(slots, { [anchor]: parseArg(arg) })
-      anchors.push(anchor)
+      anchors.unshift(anchor)
     }
   }
   const vnode = {

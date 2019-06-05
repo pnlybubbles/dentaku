@@ -10,12 +10,16 @@ import {
 import { ACTION, MODE, OP, PAD } from './constant.js'
 
 const cachedHandlers = PAD.map(pad => () => emit(pad.type, pad.payload))
+const stop = e => e.stopPropagation()
 
 const render = state => {
   return html`
     <main class="root">
       <div class="display-container">
         <div class="display">${state.display}</div>
+        <div class="history" ontouchmove=${stop}>
+          ${state.history.map(v => renderHistoryItem(v))}
+        </div>
       </div>
       <div class="container">
         ${PAD.map((pad, i) =>
@@ -28,32 +32,43 @@ const render = state => {
 
 const onClick = isSP ? 'ontouchend' : 'onclick'
 
-const renderButton = (pad, handler, op, ac) => {
-  return html`
-    <button
-      class="${classNames([
-        'button',
-        {
-          op: pad.type === ACTION.OP || pad.type === ACTION.CLEAR,
-          ans: pad.type === ACTION.ANS,
-          highlight: pad.type === ACTION.OP && pad.payload.op === op
-        }
-      ])}"
-      ${onClick}=${handler}
+const renderHistoryItem = value => html`
+  <div
+    class="history-item"
+    onclick=${() => emit(ACTION.APPLY_MEMORY, { value })}
+  >
+    ${value}
+  </div>
+`
+
+const renderButton = (pad, handler, op, ac) => html`
+  <button
+    class="${classNames([
+      'button',
+      {
+        op: pad.type === ACTION.OP,
+        fn: [ACTION.MEMORY, ACTION.CLEAR_MEMORY, ACTION.CLEAR].includes(
+          pad.type
+        ),
+        ans: pad.type === ACTION.ANS,
+        highlight: pad.type === ACTION.OP && pad.payload.op === op
+      }
+    ])}"
+    ${onClick}=${handler}
+  >
+    <span class="label"
+      >${pad.type === ACTION.CLEAR && ac ? 'AC' : pad.label}</span
     >
-      <span class="label"
-        >${pad.type === ACTION.CLEAR && ac ? 'AC' : pad.label}</span
-      >
-    </button>
-  `
-}
+  </button>
+`
 
 const initialState = {
   value: 0,
   display: '0',
   mode: MODE.CLEAR,
   op: OP.NONE,
-  ac: true
+  ac: true,
+  history: []
 }
 
 const mutation = (state, action, payload) => {
@@ -139,6 +154,27 @@ const mutation = (state, action, payload) => {
         return { ...state, display: display + '0' }
       }
     }
+    case ACTION.MEMORY: {
+      const { history, display } = state
+      const current = parseFloat(display)
+      const value = calc(state.op, state.value, current)
+      return {
+        ...state,
+        history: [...history, value]
+      }
+    }
+    case ACTION.APPLY_MEMORY: {
+      return {
+        ...state,
+        display: payload.value.toString()
+      }
+    }
+    case ACTION.CLEAR_MEMORY: {
+      return {
+        ...state,
+        history: []
+      }
+    }
     default: {
       return state
     }
@@ -157,6 +193,8 @@ const calc = (type, lhs, rhs) => {
       return lhs * rhs
     case OP.DIV:
       return lhs / rhs
+    case OP.PERCENTAGE:
+      return lhs * rhs * 0.01
     default:
       return lhs
   }
