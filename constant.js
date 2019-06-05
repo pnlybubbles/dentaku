@@ -27,22 +27,22 @@ export const MODE = {
 
 export const PAD = [
   {
-    label: 'CM',
+    label: 'fa-trash',
     type: ACTION.CLEAR_MEMORY
   },
   {
-    label: 'M',
+    label: 'fa-save',
     type: ACTION.MEMORY
   },
   {
-    label: '%',
+    label: 'fa-percentage',
     type: ACTION.OP,
     payload: {
       op: OP.PERCENTAGE
     }
   },
   {
-    label: '÷',
+    label: 'fa-divide',
     type: ACTION.OP,
     payload: {
       op: OP.DIV
@@ -70,7 +70,7 @@ export const PAD = [
     }
   },
   {
-    label: '×',
+    label: 'fa-times',
     type: ACTION.OP,
     payload: {
       op: OP.MUL
@@ -98,7 +98,7 @@ export const PAD = [
     }
   },
   {
-    label: '−',
+    label: 'fa-minus',
     type: ACTION.OP,
     payload: {
       op: OP.SUB
@@ -126,7 +126,7 @@ export const PAD = [
     }
   },
   {
-    label: '+',
+    label: 'fa-plus',
     type: ACTION.OP,
     payload: {
       op: OP.ADD
@@ -145,7 +145,7 @@ export const PAD = [
     type: ACTION.CLEAR
   },
   {
-    label: '=',
+    label: 'fa-equals',
     type: ACTION.ANS
   }
 ]

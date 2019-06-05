@@ -127,7 +127,7 @@ body {
 
 .button.op {
   color: #e6cfd9;
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .button.op:active {
@@ -146,7 +146,7 @@ body {
 .button.ans {
   background-color: #ff0073;
   color: #fff;
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .button.ans:active {

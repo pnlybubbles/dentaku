@@ -41,6 +41,16 @@ const renderHistoryItem = value => html`
   </div>
 `
 
+const renderLabel = label => {
+  if (label.slice(0, 3) === 'fa-') {
+    return html`
+      <i class="${classNames(['fas', label])}"></i>
+    `
+  } else {
+    return label
+  }
+}
+
 const renderButton = (pad, handler, op, ac) => html`
   <button
     class="${classNames([
@@ -57,7 +67,7 @@ const renderButton = (pad, handler, op, ac) => html`
     ${onClick}=${handler}
   >
     <span class="label"
-      >${pad.type === ACTION.CLEAR && ac ? 'AC' : pad.label}</span
+      >${pad.type === ACTION.CLEAR && ac ? 'AC' : renderLabel(pad.label)}</span
     >
   </button>
 `
