@@ -1,10 +1,12 @@
-import { html, app, logger } from './lib.js'
+import { html, app, logger } from '../lib.js'
 
-const render = (emit, state) => {
+const handleClick = () => emit(ACTION.up, { amount: 1 })
+
+const render = state => {
   return html`
     <main>
       <h1>${state.count}</h1>
-      <button onclick=${() => emit(ACTION.up, { amount: 1 })}>up</button>
+      <button onclick=${handleClick}>up</button>
     </main>
   `
 }
@@ -26,4 +28,12 @@ const mutation = (state, action, payload) => {
   }
 }
 
-app(document.querySelector('#app'), initialState, [logger], mutation, render)
+const { emit, use, run } = app(
+  document.querySelector('#app'),
+  initialState,
+  mutation,
+  render
+)
+
+use(logger)
+run()

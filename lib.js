@@ -2,8 +2,16 @@ export const BUILTIN_ACTION = {
   init: '__INIT__'
 }
 
-export const app = ($target, initialState, middlewares, mutation, render) => {
+/**
+ * アプリのインスタンス化
+ * @param {HTMLElement} $target マウント先
+ * @param {State} initialState ステートの初期値
+ * @param {(State, Action, Payload) => State} mutation ステートの更新
+ * @param {(State) => Tree} render 描画関数
+ */
+export const app = ($target, initialState, mutation, render) => {
   let state = initialState
+  const middlewares = []
 
   const emit = (action, payload) => {
     const newState = mutation(state, action, payload)
@@ -11,7 +19,7 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
       mw(newState, action, payload)
     }
     // 構造データを取得
-    const root = render(emit, newState)
+    const root = render(newState)
     // DOM構築(キャッシュ適用)
     const dom = compile(root)
     // 差分更新
@@ -23,7 +31,10 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
     state = newState
   }
 
-  emit(BUILTIN_ACTION.init)
+  const run = () => emit(BUILTIN_ACTION.init)
+  const use = mw => middlewares.push(mw)
+
+  return { emit, use, run }
 }
 
 const NODE_TYPE = {
@@ -148,6 +159,12 @@ const getDomByVnode = (vnode, slots) => {
   }
 }
 
+// template: 変数部で区切られた文字列の配列
+// anchors: 変数部を識別するIDの配列
+// slots: アンカーIDに対応する値を紐付けるハッシュテーブル
+// Tree: { vnode, slots }
+// vnode: { anchors: ID[], template: string[] }
+// slots: { [ID]: SlotValue }
 // ({ vnode, slots }: Tree) => dom
 // vnodeとslotsからDOMを構成する
 // vnodeのテンプレートからアンカーが埋め込まれたDOMを生成、DOMを走査してスロットを展開する
@@ -226,12 +243,12 @@ const SLOT_TYPE = {
   FUNCTION: 'FUNCTION'
 }
 
-// template: 変数部で区切られた文字列の配列
-// anchors: 変数部を識別するIDの配列
-// slots: アンカーIDに対応する値を紐付けるハッシュテーブル
-// Tree: { vnode, slots }
-// vnode: { anchors: ID[], template: string[] }
-// slots: { [ID]: SlotValue }
+/**
+ * 描画関数`render`の戻り値をつくる
+ * @param {*} templateOrg
+ * @param  {...any} args
+ * @return {Tree}
+ */
 export const html = (templateOrg, ...args) => {
   const slots = {}
   const anchors = []
@@ -307,6 +324,9 @@ const parseArg = arg => {
   }
 }
 
+/**
+ * ログを出力するミドルウェア
+ */
 export const logger = (state, action, _payload) => {
   console.log(
     `%c${getTimeString()} %c${action}%c %o`,

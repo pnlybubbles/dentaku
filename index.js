@@ -9,14 +9,18 @@ import {
 } from './lib.js'
 import { ACTION, MODE, OP, PAD } from './constant.js'
 
-const render = (emit, state) => {
+const cachedHandlers = PAD.map(pad => () => emit(pad.type, pad.payload))
+
+const render = state => {
   return html`
     <main class="root">
       <div class="display-container">
         <div class="display">${state.display}</div>
       </div>
       <div class="container">
-        ${PAD.map(pad => renderButton(emit, pad, state.op, state.ac))}
+        ${PAD.map((pad, i) =>
+          renderButton(pad, cachedHandlers[i], state.op, state.ac)
+        )}
       </div>
     </main>
   `
@@ -24,7 +28,7 @@ const render = (emit, state) => {
 
 const onClick = isSP ? 'ontouchend' : 'onclick'
 
-const renderButton = (emit, pad, op, ac) => {
+const renderButton = (pad, handler, op, ac) => {
   return html`
     <button
       class="${classNames([
@@ -35,7 +39,7 @@ const renderButton = (emit, pad, op, ac) => {
           highlight: pad.type === ACTION.OP && pad.payload.op === op
         }
       ])}"
-      ${onClick}=${() => emit(pad.type, pad.payload)}
+      ${onClick}=${handler}
     >
       <span class="label"
         >${pad.type === ACTION.CLEAR && ac ? 'AC' : pad.label}</span
@@ -158,7 +162,15 @@ const calc = (type, lhs, rhs) => {
   }
 }
 
-app(document.querySelector('#app'), initialState, [logger], mutation, render)
+const { emit, use, run } = app(
+  document.querySelector('#app'),
+  initialState,
+  mutation,
+  render
+)
+
+use(logger)
+run()
 
 // iOS対応
 if (isIOS) {
