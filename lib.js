@@ -10,7 +10,6 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
     for (const mw of middlewares) {
       mw(newState, action, payload)
     }
-    purgeGlobalFunction()
     // 構造データを取得
     const root = render(emit, newState)
     // DOM構築(キャッシュ適用)
@@ -28,10 +27,12 @@ export const app = ($target, initialState, middlewares, mutation, render) => {
 }
 
 const NODE_TYPE = {
-  ELEMENT_NODE: 1
+  ELEMENT_NODE: 1,
+  COMMENT_NODE: 8
 }
 
 const isElementNode = node => node.nodeType === NODE_TYPE.ELEMENT_NODE
+const isCommentNode = node => node.nodeType === NODE_TYPE.COMMENT_NODE
 
 const replaceNode = (targetNode, newNode) => {
   targetNode.parentNode.replaceChild(newNode, targetNode)
@@ -43,22 +44,47 @@ const isShallowEqualNode = (targetNode, newNode) =>
   targetNode.nodeValue === newNode.nodeValue &&
   targetNode.childNodes.length === newNode.childNodes.length
 
+// (targetNode: Node, newNode: Node) => void
+// targetNodeをnewNodeと違う部分だけ更新する
 const updateDiffDom = (targetNode, newNode) => {
   if (!isShallowEqualNode(targetNode, newNode)) {
+    // ノードが異なる場合は置換
     replaceNode(targetNode, newNode)
   } else {
     if (isElementNode(targetNode) && isElementNode(newNode)) {
+      // イベントリスナの差分更新
+      const targetEvent = Object.keys(targetNode.dataset).filter(
+        v => v.slice(0, 2) === 'on'
+      )
+      const newEvent = Object.keys(newNode.dataset).filter(
+        v => v.slice(0, 2) === 'on'
+      )
+      // カスタムデータに`on~~~`がセットされているものだけ比較
+      const interestEvent = targetEvent
+        .concat(newEvent)
+        .filter((v, i, self) => self.indexOf(v) === i)
+      for (const onevent of interestEvent) {
+        const listener = targetNode[onevent]
+        const newListener = newNode[onevent]
+        if (listener !== newListener) {
+          targetNode[onevent] = newListener
+        }
+      }
+      // 属性の差分更新
       for (const targetAttribute of targetNode.attributes) {
         const name = targetAttribute.name
         const newValue = newNode.getAttribute(name)
         if (newValue === null) {
+          // 無い属性を削除
           targetNode.removeAttribute(name)
         } else if (newValue !== targetAttribute.value) {
+          // 値が異なる属性を更新
           targetNode.setAttribute(name, newValue)
         }
       }
       for (const newAttribute of newNode.attributes) {
         if (targetNode.getAttribute(newAttribute.name) !== null) continue
+        // 新しい属性を追加
         targetNode.setAttribute(newAttribute.name, newAttribute.value)
       }
     }
@@ -66,6 +92,7 @@ const updateDiffDom = (targetNode, newNode) => {
       targetNode.childNodes,
       newNode.childNodes
     )) {
+      // ノードの差分更新
       updateDiffDom(targetNode_, newNode_)
     }
   }
@@ -80,6 +107,8 @@ const saveCache = (vnode, dom) => {
   })
 }
 
+// (template: string[]) => { vnode, dom }
+// テンプレートの配列内の文字列がすべて完全一致した場合にキャッシュを呼び出す
 const fetchCache = template => {
   for (const c of $cache) {
     if (c.vnode.template.every((v, i) => template[i] === v)) {
@@ -89,10 +118,15 @@ const fetchCache = template => {
   return null
 }
 
+// (vnode, slots) => { dom, slots }
+// vnodeのテンプレートとアンカーを組み合わせてDOMを構成する
+// 可能な場合はキャッシュされたDOMが利用可能なようにslotsを更新する
 const getDomByVnode = (vnode, slots) => {
   const { template, anchors } = vnode
   const cached = fetchCache(template)
   if (cached !== null) {
+    // キャッシュがある場合はDOMを再利用
+    // キャッシュのDOMに埋め込まれているアンカーIDに対応するようにスロットのIDを更新
     return {
       dom: cached.dom.cloneNode(true),
       slots: Object.fromEntries(
@@ -100,10 +134,12 @@ const getDomByVnode = (vnode, slots) => {
       )
     }
   } else {
+    // キャッシュにない場合はHTMLをパース
     const text = [...eachAlternately(template, anchors)].join('')
     const dom = new DOMParser()
       .parseFromString(text, 'text/html')
       .querySelector('body').childNodes[0]
+    // キャッシュにDOMを対応するアンカーIDを保存
     saveCache(vnode, dom)
     return {
       dom: dom.cloneNode(true),
@@ -112,36 +148,68 @@ const getDomByVnode = (vnode, slots) => {
   }
 }
 
+// ({ vnode, slots }: Tree) => dom
+// vnodeとslotsからDOMを構成する
+// vnodeのテンプレートからアンカーが埋め込まれたDOMを生成、DOMを走査してスロットを展開する
 const compile = ({ vnode: vnode_, slots: slots_ }) => {
   const { dom, slots } = getDomByVnode(vnode_, slots_)
+  const removeNodeQueue = []
+
   traverseNode(dom, node => {
     if (node.nodeValue !== null) {
+      // Textノードの場合
       const slot = slots[node.nodeValue.trim()]
       if (slot) {
         switch (slot.type) {
           case SLOT_TYPE.NODE:
+            // 再帰的に小要素をスロット展開
             replaceNode(node, compile(slot.value))
             break
           case SLOT_TYPE.VALUE:
+            // 文字列としてスロット展開
             node.nodeValue = slot.value
             break
         }
       }
     }
     if (isElementNode(node)) {
+      // Elementノードの場合
       for (const attr of node.attributes) {
-        const attrNameSlot = slots[attr.name]
+        // 属性名をスロット展開
+        let attrName = attr.name
+        const attrNameSlot = slots[attrName]
         if (attrNameSlot) {
           node.setAttribute(attrNameSlot.value, attr.value)
-          node.removeAttribute(attr.name)
+          node.removeAttribute(attrName)
+          attrName = attrNameSlot.value
         }
+        // 属性値をスロット展開
         const attrValueSlot = slots[attr.value]
         if (attrValueSlot) {
-          node.setAttribute(attr.name, attrValueSlot.value)
+          if (attrValueSlot.type === SLOT_TYPE.FUNCTION) {
+            // 関数の場合はイベントリスナとしてプロパティに代入
+            // イベント名をカスタムデータとして登録
+            node.removeAttribute(attrName)
+            node[attrName] = attrValueSlot.value
+            node.dataset[attrName] = ''
+            if (DEBUG && !EVENT_NAMES.includes(attrName)) {
+              console.error(`Unknown event name: "${attrName}"`)
+            }
+          } else {
+            node.setAttribute(attrName, attrValueSlot.value)
+          }
         }
       }
     }
+    if (isCommentNode(node)) {
+      // コメントノードは削除
+      removeNodeQueue.push(node)
+    }
   })
+  // 不要なノードの削除
+  for (const node of removeNodeQueue) {
+    node.remove()
+  }
   return dom
 }
 
@@ -154,17 +222,28 @@ const traverseNode = (node, f) => {
 
 const SLOT_TYPE = {
   NODE: 'NODE',
-  VALUE: 'VALUE'
+  VALUE: 'VALUE',
+  FUNCTION: 'FUNCTION'
 }
 
+// template: 変数部で区切られた文字列の配列
+// anchors: 変数部を識別するIDの配列
+// slots: アンカーIDに対応する値を紐付けるハッシュテーブル
+// Tree: { vnode, slots }
+// vnode: { anchors: ID[], template: string[] }
+// slots: { [ID]: SlotValue }
 export const html = (templateOrg, ...args) => {
-  // const text = [...eachAlternately(template, parseArgs(args))].join('')
   const slots = {}
   const anchors = []
   const template = [...templateOrg]
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
     if (Array.isArray(arg)) {
+      // 配列が1つのスロットに入っている場合は、配列をフラットに展開して複数のスロットにする
+      // スロットが連続するとアンカーを埋め込んだときにテキストがつながってしまう
+      // テキストノードを分割するために間にコメントノードを挟む
+      // `ID1<!---->ID2<!---->ID3<!---->ID4`
+      // のようなHTMLになるように配列を展開してフラットにする
       const slotArr = arg.map(a => parseArg(a))
       const anchorArr = slotArr.map(() => getAnchor())
       const textNodeSeparator = new Array(anchorArr.length - 1).fill('<!---->')
@@ -172,6 +251,8 @@ export const html = (templateOrg, ...args) => {
       anchors.push(...anchorArr)
       template.splice(i + 1, 0, ...textNodeSeparator)
     } else {
+      // アンカーIDを生成
+      // アンカーIDに対応したスロットをハッシュテーブルに追加
       const anchor = getAnchor()
       Object.assign(slots, { [anchor]: parseArg(arg) })
       anchors.push(anchor)
@@ -187,8 +268,14 @@ export const html = (templateOrg, ...args) => {
   }
 }
 
+// () => ID: string
 const getAnchor = () => `_${randomString()}`
 
+// (arg: any) => SlotValue
+// SlotValue:
+//   { type: VALUE, value: string } |
+//   { type: NODE, value: TREE }
+//   { type: FUNCTION, value: Function }
 const parseArg = arg => {
   switch (typeof arg) {
     case 'string':
@@ -199,8 +286,8 @@ const parseArg = arg => {
       }
     case 'function':
       return {
-        type: SLOT_TYPE.VALUE,
-        value: registerGlobalFunction(arg)
+        type: SLOT_TYPE.FUNCTION,
+        value: arg
       }
     case 'object':
       if ((arg.vnode, arg.slots)) {
@@ -278,18 +365,9 @@ export const classNames = arrayClassNames =>
     })
     .join(' ')
 
-const PREFIX = '__functions__'
-
-const registerGlobalFunction = func => {
-  const id = randomString()
-  window[PREFIX] = window[PREFIX] || {}
-  window[PREFIX][id] = func
-  return `window['${PREFIX}']['${id}']()`
-}
-
-const purgeGlobalFunction = () => {
-  window[PREFIX] = {}
-}
+const EVENT_NAMES = Object.getOwnPropertyNames(HTMLElement.prototype).filter(
+  v => v.slice(0, 2) === 'on'
+)
 
 function* zip(a, b) {
   const minLength = Math.max(a.length, b.length)
@@ -312,3 +390,5 @@ function* eachAlternately(first, second) {
 
 export const isIOS = /iP(hone|(o|a)d)/.test(navigator.userAgent)
 export const isSP = /(iP(hone|(o|a)d))|Android/.test(navigator.userAgent)
+
+export const DEBUG = location.hostname === 'localhost'
