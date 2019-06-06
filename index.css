@@ -189,10 +189,6 @@ body {
   margin-top: 1px;
 }
 
-.button.op .label {
-  margin: 0;
-}
-
-.button.fn .label {
-  margin: 0;
+.button .label i {
+  margin-top: 1px;
 }
