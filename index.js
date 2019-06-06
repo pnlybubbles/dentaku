@@ -52,7 +52,7 @@ const renderLabel = label => {
 }
 
 const renderButton = (pad, handler, op, ac) => html`
-  <button
+  <div
     class="${classNames([
       'button',
       {
@@ -66,10 +66,10 @@ const renderButton = (pad, handler, op, ac) => html`
     ])}"
     ${onClick}=${handler}
   >
-    <span class="label"
-      >${pad.type === ACTION.CLEAR && ac ? 'AC' : renderLabel(pad.label)}</span
-    >
-  </button>
+    <div class="label">
+      ${pad.type === ACTION.CLEAR && ac ? 'AC' : renderLabel(pad.label)}
+    </div>
+  </div>
 `
 
 const initialState = {

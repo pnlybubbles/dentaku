@@ -93,11 +93,11 @@ body {
 }
 
 .button {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 25vw;
   box-sizing: border-box;
-  padding: 0;
-  border: 0;
   border-bottom: 1px solid #ddd;
   border-right: 1px solid #ddd;
   background-color: #fff;
@@ -105,8 +105,6 @@ body {
   height: 20%;
   font-size: 20px;
   font-family: 'Avenir Next';
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
   transition: all 0.2s;
   position: relative;
 }
@@ -170,7 +168,7 @@ body {
   border-radius: 50%;
   border: 2px solid #ff0073;
   position: absolute;
-  top: calc(50% + 1px);
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
@@ -187,7 +185,14 @@ body {
   opacity: 1;
 }
 
-.label {
-  display: inline-block;
-  margin-top: 3px;
+.button .label {
+  margin-top: 1px;
+}
+
+.button.op .label {
+  margin: 0;
+}
+
+.button.fn .label {
+  margin: 0;
 }
