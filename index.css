@@ -87,6 +87,8 @@ body {
   flex-wrap: wrap;
   border-radius: 8px;
   overflow: hidden;
+  /* https://gist.github.com/ayamflow/b602ab436ac9f05660d9c15190f4fd7b */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
   max-height: calc(100% - 128px);
   height: 120vw;
   user-select: none;
