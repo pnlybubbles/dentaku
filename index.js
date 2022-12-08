@@ -33,7 +33,7 @@ const onClick = isSP ? 'ontouchend' : 'onclick'
 const renderHistoryItem = value => html`
   <div
     class="history-item"
-    onclick=${() => emit(ACTION.APPLY_MEMORY, { value })}
+    ${onClick}=${() => emit(ACTION.APPLY_MEMORY, { value })}
   >
     ${value}
   </div>
