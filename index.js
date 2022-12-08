@@ -10,14 +10,12 @@ import {
 import { ACTION, MODE, OP, PAD } from './constant.js'
 
 const cachedHandlers = PAD.map(pad => () => emit(pad.type, pad.payload))
-const stop = e => e.stopPropagation()
-
 const render = state => {
   return html`
     <main class="root">
       <div class="display-container">
         <div class="display">${state.display}</div>
-        <div class="history" ontouchmove=${stop}>
+        <div class="history">
           ${state.history.map(v => renderHistoryItem(v))}
         </div>
       </div>
@@ -222,16 +220,12 @@ run()
 
 // iOS対応
 if (isIOS) {
-  window.addEventListener(
-    'touchmove',
-    function(e) {
-      e.preventDefault()
-    },
-    { passive: false }
-  )
+  // スクロールできないように高さ固定
   document.body.style = styleObjectToString({
     minHeight: `${window.innerHeight}px`
   })
+  // ダブルタップでズームを無効化
+  document.addEventListener('dblclick', e => e.preventDefault())
 }
 
 // PWA対応
